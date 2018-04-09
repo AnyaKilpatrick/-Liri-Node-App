@@ -17,10 +17,23 @@ var userRequest = process.argv[2];
 
 //OBJECT
 var api={
+    welcome: function(){
+        if (process.argv.length === 2){
+            console.log(`
+            Hello there! My name is Liri!
+            I am a command line node app. If you give me parameters, I will give you back some necessary data.
+            Your options:
+                my-tweets
+                spotify-this-song
+                movie-this
+                do-what-it-says
+            `)
+        }
+    },
     spotifyAPI: function(){
         var spotifyParams = { //setting parameters, to specify what we are searching for
             type: "track",
-            query: song, //var song will have a value of user's input
+            query: name, //var name will have a value of user's input
             limit: 1
         }
     
@@ -58,7 +71,7 @@ var api={
         });
     },
     omdbAPI: function(){
-        var myURL = "http://www.omdbapi.com/?t="+ movieName + "&apikey=58d589c6";
+        var myURL = "https://www.omdbapi.com/?t="+ name + "&apikey=58d589c6";
 
         request(myURL, function(error, response, body) {
             if(error){
@@ -94,16 +107,15 @@ var api={
     }
 }
 
-
+api.welcome();
 // ------------SPOTIFY-----------------//
 if (userRequest === "spotify-this-song"){
-    var song;
-    if (process.argv.length === "3"){ // if user didn't specify a song name
-    song = "Wanted Dead Or Alive";
-    console.log(process.argv);
+    var name;//song name
+    if (process.argv.length === 3){ // if user didn't specify a song name
+    name = "Wanted Dead Or Alive";
     console.log("You didn't pick a song, but I can offer you this one.");
     }else{
-        song = process.argv.slice(3).join(" "); //will grab user's input/ song's name
+        name = process.argv.slice(3).join(" "); //will grab user's input/ song's name
         api.logCommand(); //log text only if search was successful
     }
     api.spotifyAPI();
@@ -115,29 +127,42 @@ else if (userRequest === "my-tweets"){
 }
 //--------------- OMDb ---------------//
 else if (userRequest === "movie-this"){
-    var movieName;
-    if (process.argv.length ==="3"){ // if user didn't specify a movie name
-        movieName = "Mr+Nobody";
-        console.log("You didn't pick a movie, but I can offer you smth really good.");
+    var name;//movie name
+    if (process.argv.length === 3){ // if user didn't specify a movie name
+        name = "Mr+Nobody";
+        console.log("You didn't pick a movie, but I can offer you something really good.");
     }else{
-        movieName = process.argv.slice(3).join("+");
+        name = process.argv.slice(3).join("+");
         api.logCommand(); //log text only if search was successful
     }
     api.omdbAPI();
 }
-//------------------Do-What-It-Says----------------//
+//-----------Do What It Says--------------//
 else if (userRequest === "do-what-it-says"){
-    var song;
+    var dataArray;
+    var command;
+    var name;//name of song or movie
     fs.readFile("random.txt", "utf8", function(error, data){
-        if(error){
+        if (error){
             return console.log(error);
         }else{
-            var dataArr = data.split(",");//grabbing a text from random.txt and turning it onto array
-            song = dataArr[1];
-            api.logCommand(); //log text only if search was successful
+            api.logCommand();//log command only when there are no errors
+            dataArray = data.split(",");
+            command = dataArray[0];
+            if(dataArray.length>1){//if array's length is more than 1, there is a specified name of movie/song we need to grab
+                name=dataArray[1].replace(/"/g, "");//getting rid of quotation marks around the string
+                console.log(name);
+            }
+            //calling for different APIs
+            if (command==="my-tweets"){
+                api.twitterAPI();
+            }
+            else if(command==="spotify-this-song"){
+                api.spotifyAPI();
+            }
+            else if(command==="movie-this"){
+                api.omdbAPI();
+            }
         }
-        api.spotifyAPI();
-    })
+    });
 }
-
-
